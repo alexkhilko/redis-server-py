@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "redis-server-py"
+version = "0.1.0"
+description = "Light Redis implementation written in Python"
+authors = ["Alex Khilko <alex.khilko@tripledotstudios.com>"]
+readme = "README.md"
+packages = [{include = "redis_server_py"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
