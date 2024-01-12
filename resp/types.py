@@ -117,6 +117,6 @@ def get_serializer_type(
         return SimpleString() if not use_bulk else BulkString()
     if isinstance(obj, int):
         return Integer()
-    if isinstance(obj, list):
+    if isinstance(obj, (list, tuple)):
         return Array()
     raise ValueError(f"Unknown RESP type: {type(obj)}")
