@@ -7,6 +7,8 @@ def deserialize(resp_str: str) -> Any:
     return resp_type.deserialize(resp_str)[0]
 
 
-def serialize(resp_obj: Any, use_bulk: bool = True) -> str:
-    resp_type = get_serializer_type(resp_obj, use_bulk)
+def serialize(resp_obj: Any, use_bulk: bool = True, is_error: bool = False) -> str:
+    resp_type = get_serializer_type(resp_obj, use_bulk, is_error)
     return resp_type.serialize(resp_obj)
+
+

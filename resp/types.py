@@ -108,11 +108,11 @@ def get_deserializer_type(resp_string: str) -> RespType:
 def get_serializer_type(
     obj: Any, use_bulk: bool = False, is_error: bool = False
 ) -> RespType:
+    if is_error:
+        return SimpleError()
     if obj is None:
         return BulkString()
     if isinstance(obj, str):
-        if is_error:
-            return SimpleError()
         # TODO: Think about a better way to define what type to use for strings.
         return SimpleString() if not use_bulk else BulkString()
     if isinstance(obj, int):

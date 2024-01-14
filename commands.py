@@ -1,4 +1,5 @@
 from resp.parsers import deserialize
+from exceptions import UnknownCommandException
 
 
 def parse_request(request: bytes) -> str:
@@ -15,7 +16,7 @@ def handle_request(data: bytes) -> list:
         return handle_get(arguments[0])
     if command.upper() == "SET":
         return handle_set(arguments[0], arguments[1])
-    raise ValueError(f"Unknown command {command}")
+    raise UnknownCommandException(f"Unknown command `{command}`")
 
 
 store = {}
