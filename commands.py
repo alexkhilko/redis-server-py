@@ -1,5 +1,8 @@
 from resp.parsers import deserialize
 from exceptions import UnknownCommandException
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def parse_request(request: bytes) -> str:
@@ -8,6 +11,7 @@ def parse_request(request: bytes) -> str:
 
 def handle_request(data: bytes) -> list:
     command, *arguments = parse_request(request=data)
+    logger.info("Received command %s, arguments %s", command, arguments)
     if command == "PING":
         return ["PONG"]
     if command == "ECHO":
@@ -16,7 +20,10 @@ def handle_request(data: bytes) -> list:
         return handle_get(arguments[0])
     if command.upper() == "SET":
         return handle_set(arguments[0], arguments[1])
-    raise UnknownCommandException(f"Unknown command `{command}`")
+    if command.upper() in ["CLIENT", "COMMAND"]:
+        # mock response, do not implement
+        return ["OK"]
+    raise UnknownCommandException(f"Unknown command `{command}`, arguments `{arguments}`")
 
 
 store = {}

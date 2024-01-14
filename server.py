@@ -21,12 +21,14 @@ def _encode_error_response(error) -> bytes:
     return serialize([error], is_error=True).encode("utf-8")
 
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.bind((HOST, PORT))
-    s.listen()
-    while True:
-        conn, addr = s.accept()
-        with conn:
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
+    # Avoid bind() exception: OSError: [Errno 48] Address already in use
+    lsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    lsock.bind((HOST, PORT))
+    lsock.listen()
+    conn, addr = lsock.accept()
+    with conn:
+        while True:
             print(f"Connected by {addr}")
             data = conn.recv(1024)
             print(f"received data {data}")
