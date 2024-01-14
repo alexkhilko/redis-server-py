@@ -1,22 +1,12 @@
 #!/usr/bin/env python3
 
 import socket
-from resp.parsers import deserialize, serialize
+from resp.parsers import serialize
+from commands import handle_request
+import time
 
 HOST = "127.0.0.1"
 PORT = 6379
-
-
-def parse_request(request: bytes) -> str:
-    return deserialize(request.decode("utf-8"))
-
-
-def handle_request(command: str, *arguments) -> list:
-    if command == "PING":
-        return ["PONG"]
-    if command == "ECHO":
-        return arguments
-    raise ValueError(f"Unknown command {command}")
 
 
 def _encode_response(response: list) -> bytes:
@@ -28,15 +18,15 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     print("after bind")
     s.listen()
     print("after listen")
-    conn, addr = s.accept()
-    print("after accept")
-    with conn:
-        print(f"Connected by {addr}")
-        while True:
+    while True:
+        conn, addr = s.accept()
+        print("after accept")
+        with conn:
+            print(f"Connected by {addr}")
             data = conn.recv(1024)
             print(f"received data {data}")
             if not data:
-                break
-            request = parse_request(data)
-            response = handle_request(*request)
+                time.sleep(2)
+                continue
+            response = handle_request(data)
             conn.sendall(_encode_response(response))
