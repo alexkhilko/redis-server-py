@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
 import socket
-from resp.parsers import serialize
-from commands import handle_request
-from exceptions import RedisServerException
+from commands import process_request
 import logging
 import threading
 
@@ -14,28 +12,15 @@ HOST = "127.0.0.1"
 PORT = 6379
 
 
-def _encode_response(response: list) -> bytes:
-    return serialize(response).encode("utf-8")
-
-def _encode_error_response(error) -> bytes:
-    return serialize([error], is_error=True).encode("utf-8")
-
-
 def handle_client(connection):
     with connection:
         while True:
-            print(f"Connected by {address}")
+            # print(f"Connected by {address}")
             data = connection.recv(1024)
-            print(f"received data {data}")
+            # print(f"received data {data}")
             if not data:
                 break
-            try:
-                response = handle_request(data)
-            except RedisServerException as exc:
-                logger.exception("Redis exception - %s", exc)
-                response = _encode_error_response(str(exc))
-            else:
-                response = _encode_response(response)
+            response = process_request(data)
             connection.sendall(response)
 
 

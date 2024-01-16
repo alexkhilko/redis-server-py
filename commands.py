@@ -1,17 +1,18 @@
-from resp.parsers import deserialize
+from resp.parsers import deserialize, serialize
 from exceptions import UnknownCommandException
 import logging
+from exceptions import RedisServerException
 
 logger = logging.getLogger(__name__)
 
 
-def parse_request(request: bytes) -> str:
+def _parse_request(request: bytes) -> str:
     return deserialize(request.decode("utf-8"))
 
 
-def handle_request(data: bytes) -> list:
-    command, *arguments = parse_request(request=data)
-    logger.info("Received command %s, arguments %s", command, arguments)
+def _handle_request(data: bytes) -> list:
+    command, *arguments = _parse_request(request=data)
+    # logger.info("Received command %s, arguments %s", command, arguments)
     if command == "PING":
         return ["PONG"]
     if command == "ECHO":
@@ -23,7 +24,28 @@ def handle_request(data: bytes) -> list:
     if command.upper() in ["CLIENT", "COMMAND"]:
         # mock response, do not implement
         return ["OK"]
-    raise UnknownCommandException(f"Unknown command `{command}`, arguments `{arguments}`")
+    raise UnknownCommandException(
+        f"Unknown command `{command}`, arguments `{arguments}`"
+    )
+
+
+def _encode_response(data: list) -> bytes:
+    return serialize(data).encode("utf-8")
+
+
+def _encode_error_response(error) -> bytes:
+    return serialize([error], is_error=True).encode("utf-8")
+
+
+def process_request(request: bytes) -> bytes:
+    try:
+        response = _handle_request(request)
+    except RedisServerException as exc:
+        logger.exception("Redis exception - %s", exc)
+        response = _encode_error_response(str(exc))
+    else:
+        response = _encode_response(response)
+    return response
 
 
 store = {}
