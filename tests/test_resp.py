@@ -1,5 +1,6 @@
 import pytest
 from base.parsers import RespParser, RespSerializer
+from base.exceptions import RespProtocolError, RespParsingError
 
 
 @pytest.mark.parametrize(
@@ -24,6 +25,18 @@ def test_parser(resp_string, expected):
     assert parser.parse() == expected
 
 
+def test_parse_error():
+    with pytest.raises(RespParsingError):
+        parser = RespParser(data=b":foo\r\n")
+        parser.parse()
+
+    
+def test_parse_protocol_error():
+    with pytest.raises(RespProtocolError):
+        parser = RespParser(data=b">foo")
+        parser.parse()
+
+
 @pytest.mark.parametrize(
     "value, expected, use_bulk",
     [
@@ -43,3 +56,9 @@ def test_parser(resp_string, expected):
 def test_serialize(value, expected, use_bulk):
     serializer = RespSerializer()
     assert serializer.serialize(data=value, use_bulk=use_bulk) == expected
+
+
+def test_serialize_error():
+    with pytest.raises(RespProtocolError):
+        serializer = RespSerializer()
+        serializer.serialize(data=object())

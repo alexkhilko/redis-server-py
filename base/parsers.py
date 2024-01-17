@@ -1,5 +1,6 @@
 from typing import Any
 import io
+from base.exceptions import RespProtocolError, RespParsingError
 
 
 CRLF = b"\r\n"
@@ -21,6 +22,7 @@ class RespParser:
         return data.rstrip(CRLF).decode(self._encoding)
 
     def parse(self) -> Any:
+        """Parse RESP data into Python object"""
         def parse_simple_string() -> str:
             return self._decode(self._readline())
 
@@ -44,23 +46,24 @@ class RespParser:
             return [self.parse() for _ in range(length)]
 
         resp_type = self._buffer.read(1)
-
-        if resp_type == b'+':
-            return parse_simple_string()
-        elif resp_type == b'-':
-            return parse_error()
-        elif resp_type == b':':
-            return parse_integer()
-        elif resp_type == b'$':
-            return parse_bulk_string()
-        elif resp_type == b'*':
-            return parse_array()
-        else:
-            raise ValueError(f"Invalid RESP type: {resp_type}")
+        try:
+            if resp_type == b'+':
+                return parse_simple_string()
+            if resp_type == b'-':
+                return parse_error()
+            if resp_type == b':':
+                return parse_integer()
+            if resp_type == b'$':
+                return parse_bulk_string()
+            if resp_type == b'*':
+                return parse_array()
+        except Exception as e:
+            raise RespParsingError(f"Failed to parse resp data: {resp_type}") from e
+        raise RespProtocolError(f"Unsopported RESP type: {resp_type}")
 
 
 class RespSerializer:
-    def __init__(self, encoding: str ='utf-8'):
+    def __init__(self, encoding: str = 'utf-8'):
         self.encoding = encoding
 
     def serialize(self, data, use_bulk=True, is_error=False) -> bytes:
@@ -83,4 +86,4 @@ class RespSerializer:
             for item in data:
                 result.append(self._serialize(data=item, use_bulk=use_bulk, is_error=False))
             return "".join(result)
-        raise ValueError(f"Unknown RESP type: {type(data)}")
+        raise RespProtocolError(f"Unsupported RESP type: {type(data)}, {data}")
