@@ -1,5 +1,5 @@
 import asyncio
-from commands import process_request
+from request_handler import process_request
 import logging
 
 logger = logging.getLogger(__name__)

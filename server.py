@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import socket
-from commands import process_request
+from request_handler import process_request
 import logging
 import threading
 

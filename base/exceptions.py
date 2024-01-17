@@ -6,6 +6,9 @@ class UnknownCommandException(RedisServerException):
     pass
 
 
+class InvalidCommandSyntaxError(RedisServerException):
+    pass
+
 class RespProtocolError(RedisServerException):
     pass
 
