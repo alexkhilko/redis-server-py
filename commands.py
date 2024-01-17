@@ -1,17 +1,14 @@
-from resp.parsers import deserialize, serialize
+from resp.parsers import serialize
 from exceptions import UnknownCommandException
 import logging
 from exceptions import RedisServerException
+from base.parsers import RespParser
 
 logger = logging.getLogger(__name__)
 
 
-def _parse_request(request: bytes) -> str:
-    return deserialize(request.decode("utf-8"))
-
-
 def _handle_request(data: bytes) -> list:
-    command, *arguments = _parse_request(request=data)
+    command, *arguments = RespParser(data=data).parse()
     # logger.info("Received command %s, arguments %s", command, arguments)
     if command == "PING":
         return ["PONG"]

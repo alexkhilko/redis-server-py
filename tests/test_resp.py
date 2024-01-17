@@ -1,26 +1,28 @@
 import pytest
-from resp.parsers import deserialize, serialize
+from resp.parsers import serialize
+from base.parsers import RespParser
 
 
 @pytest.mark.parametrize(
     "resp_string, expected",
     [
-        ("+OK\r\n", "OK"),
-        ("$0\r\n\r\n", ""),
-        ("$-1\r\n", None),
-        ("-Error message\r\n", "Error message"),
-        (":1000\r\n", 1000),
-        (":-1000\r\n", -1000),
-        ("$6\r\nfoobar\r\n", "foobar"),
-        ("*-1\r\n", None),
-        ("*3\r\n$5\r\nhello\r\n$-1\r\n$5\r\nworld\r\n", ["hello", None, "world"]),
-        ("*2\r\n$3\r\nfoo\r\n$3\r\nbar\r\n", ["foo", "bar"]),
-        ("*3\r\n:1\r\n:2\r\n:3\r\n", [1, 2, 3]),
-        ("*2\r\n$4\r\necho\r\n$11\r\nhello world\r\n", ["echo", "hello world"]),
+        (b"+OK\r\n", "OK"),
+        (b"$0\r\n\r\n+OK\r\n", ""),
+        (b"$-1\r\n", None),
+        (b"-Error message\r\n", "Error message"),
+        (b":1000\r\n", 1000),
+        (b":-1000\r\n", -1000),
+        (b"$6\r\nfoobar\r\n", "foobar"),
+        (b"*-1\r\n", None),
+        (b"*3\r\n$5\r\nhello\r\n$-1\r\n$5\r\nworld\r\n", ["hello", None, "world"]),
+        (b"*2\r\n$3\r\nfoo\r\n$3\r\nbar\r\n", ["foo", "bar"]),
+        (b"*3\r\n:1\r\n:2\r\n:3\r\n", [1, 2, 3]),
+        (b"*2\r\n$4\r\necho\r\n$11\r\nhello world\r\n", ["echo", "hello world"]),
     ],
 )
-def test_deserialize(resp_string, expected):
-    assert deserialize(resp_string) == expected
+def test_resp_parser(resp_string, expected):
+    parser = RespParser(data=resp_string)
+    assert parser.parse() == expected
 
 
 @pytest.mark.parametrize(
