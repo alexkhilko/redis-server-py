@@ -3,6 +3,7 @@ import io
 
 
 CRLF = b"\r\n"
+CRLF_STR = "\r\n"
 
 
 class RespParser:
@@ -37,7 +38,7 @@ class RespParser:
             return self._decode(self._buffer.read(length + 2))
 
         def parse_array() -> list[Any]:
-            length = int(self._readline().decode("utf-8").rstrip('\r\n'))
+            length = int(self._decode(self._readline()))
             if length == -1:
                 return None
             return [self.parse() for _ in range(length)]
@@ -56,3 +57,30 @@ class RespParser:
             return parse_array()
         else:
             raise ValueError(f"Invalid RESP type: {resp_type}")
+
+
+class RespSerializer:
+    def __init__(self, encoding: str ='utf-8'):
+        self.encoding = encoding
+
+    def serialize(self, data, use_bulk=True, is_error=False) -> bytes:
+        value = self._serialize(
+            data=data, use_bulk=use_bulk, is_error=is_error
+        )
+        return value.encode(self.encoding)
+    
+    def _serialize(self, data, use_bulk=True, is_error=False) -> bytes:
+        if is_error:
+            return f"-{data}{CRLF_STR}"
+        if data is None:
+            return f"$-1{CRLF_STR}"
+        if isinstance(data, str):
+            return f"${len(data)}{CRLF_STR}{data}{CRLF_STR}" if use_bulk else f"+{data}{CRLF_STR}"
+        if isinstance(data, int):
+            return f":{data}{CRLF_STR}"
+        if isinstance(data, (list, tuple)):
+            result = [f"*{len(data)}{CRLF_STR}"]
+            for item in data:
+                result.append(self._serialize(data=item, use_bulk=use_bulk, is_error=False))
+            return "".join(result)
+        raise ValueError(f"Unknown RESP type: {type(data)}")

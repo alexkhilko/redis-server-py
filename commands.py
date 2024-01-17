@@ -1,8 +1,7 @@
-from resp.parsers import serialize
 from exceptions import UnknownCommandException
 import logging
 from exceptions import RedisServerException
-from base.parsers import RespParser
+from base.parsers import RespParser, RespSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -27,11 +26,11 @@ def _handle_request(data: bytes) -> list:
 
 
 def _encode_response(data: list) -> bytes:
-    return serialize(data).encode("utf-8")
+    return RespSerializer().serialize(data)
 
 
-def _encode_error_response(error) -> bytes:
-    return serialize([error], is_error=True).encode("utf-8")
+def _encode_error_response(error: str) -> bytes:
+    return RespSerializer().serialize([error], is_error=True)
 
 
 def process_request(request: bytes) -> bytes:
