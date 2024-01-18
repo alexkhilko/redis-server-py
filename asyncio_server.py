@@ -12,7 +12,6 @@ PORT = 6379
 async def handle_client(reader, writer):
     while True:
         data = await reader.read(1024)
-        # print(f"received data {data}")
         if not data:
             break
         response = process_request(data)

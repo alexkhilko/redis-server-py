@@ -46,7 +46,7 @@ class SetCommand(RedisCommand):
     REQUIRED_ATTRIBUTES = {"key", "value"}
     POSSIBLE_OPTIONS = {"EX", "PX", "EXAT", "PXAT"}
 
-    def _calculate_expire(ex: int | None = None, px: int | None = None, exat: int | None = None, pxat: int | None = None) -> int:
+    def _calculate_expire(self, ex: int | None = None, px: int | None = None, exat: int | None = None, pxat: int | None = None) -> int:
         if ex is not None:
             return _get_current_time_in_ms() + int(ex) * 1000
         if px is not None:

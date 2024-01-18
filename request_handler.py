@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 def _handle_request(data: bytes) -> list:
     command, *arguments = RespParser(data=data).parse()
     command_handler = get_command_handler(command)
-    return command_handler(*arguments).execute()
+    return command_handler(arguments).execute()
 
 
 def process_request(request: bytes) -> bytes:
