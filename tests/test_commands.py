@@ -1,46 +1,72 @@
-from commands import RedisCommand
+import time
 import pytest
-from base.exceptions import InvalidCommandSyntaxError
+
+value = "test_value"
 
 
-class TestRedisCommand(RedisCommand):
-    REQUIRED_ATTRIBUTES = ("key", "value")
-    POSSIBLE_OPTIONS = ("foo", "bar")
+@pytest.fixture
+def key():
+    return f"test_{time.time_ns()}"
+
+
+def test_set_command(key, redis_client):
+    assert redis_client.set(key, value)
+    assert redis_client.get(key).decode('utf-8') == value
+    value2 = "test_value2"
+    assert redis_client.set(key, value2)
+    assert redis_client.get(key).decode('utf-8') == value2
+
+
+def test_get_command(key, redis_client):
+    redis_client.set(key, value)
+    assert redis_client.get(key).decode('utf-8') == value
     
-    def execute(self) -> str:
-        self._parse_arguments()
-        return self._attributes
+
+def test_set_with_ex(key, redis_client):
+    redis_client.set(key, value, ex=1)
+    assert redis_client.get(key).decode('utf-8') == value
+    time.sleep(2)
+    assert redis_client.get(key) is None
 
 
-@pytest.mark.parametrize(
-    "arguments, expected",
-    [
-        (["test_key", "test_value"], {"key": "test_key", "value": "test_value"}),
-        (["test_key", "test_value", "foo", 10], {"key": "test_key", "value": "test_value", "foo": 10}),
-        (["test_key", "test_value", "foo", 10, "bar", "20"], {"key": "test_key", "value": "test_value", "foo": 10, "bar": "20"}),
-    ]
-)
-def test_parse_attributes(arguments, expected):
-    command = TestRedisCommand(arguments)
-    assert command.execute() == expected
+def test_set_with_px(key, redis_client):
+    redis_client.set(key, value, px=1000)
+    assert redis_client.get(key).decode('utf-8') == value
+    time.sleep(0.6)
+    assert redis_client.get(key).decode('utf-8') == value
+    time.sleep(2)
+    assert redis_client.get(key) is None
 
 
-def test_invalid_number_of_arguments():
-    command = TestRedisCommand(["test_key"])
-    with pytest.raises(InvalidCommandSyntaxError) as exc:
-        command.execute()
-    assert "ERR wrong number of arguments for command" in str(exc.value)
+def test_set_with_exat(key, redis_client):
+    redis_client.set(key, value, exat=int(time.time()) + 1)
+    assert redis_client.get(key).decode('utf-8') == value
+    time.sleep(2)
+    assert redis_client.get(key) is None
 
 
-def test_syntax_error():
-    command = TestRedisCommand(("test_key", "test_value", "foo"))
-    with pytest.raises(InvalidCommandSyntaxError) as exc:
-        command.execute()
-    assert "ERR syntax error" in str(exc.value)
+def test_set_with_pxat(key, redis_client):
+    redis_client.set(key, value, pxat=int(time.time() * 1000) + 1000)
+    assert redis_client.get(key).decode('utf-8') == value
+    time.sleep(2)
+    assert redis_client.get(key) is None
 
 
-def test_invalid_option():
-    command = TestRedisCommand(("test_key", "test_value", "fofo", 10))
-    with pytest.raises(InvalidCommandSyntaxError) as exc:
-        command.execute()
-    assert "ERR invalid option: fofo" in str(exc.value)
+@pytest.mark.parametrize("keys,expected_count", [
+    (("key",), 1),
+    (("key", "key",), 2),
+    (("key", "key2",), 2),
+    (("key", "key4",), 1),
+])
+def test_exists(keys, expected_count, redis_client):
+    redis_client.set("key", 1)
+    redis_client.set("key2", 1)
+    assert redis_client.exists(*keys) == expected_count
+
+
+def test_exists_with_expire(key, redis_client):
+    redis_client.set(key, 1, px=500)
+    assert redis_client.exists(key) == 1
+    time.sleep(1)
+    assert redis_client.exists(key) == 0
+    
