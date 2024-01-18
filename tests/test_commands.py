@@ -69,4 +69,11 @@ def test_exists_with_expire(key, redis_client):
     assert redis_client.exists(key) == 1
     time.sleep(1)
     assert redis_client.exists(key) == 0
-    
+
+
+def test_delete(redis_client):
+    redis_client.set("foo", 1)
+    redis_client.set("bar", 1)
+    assert redis_client.delete("foo", "bar", "sadfsafdsa") == 2
+    assert redis_client.delete("foo") == 0
+

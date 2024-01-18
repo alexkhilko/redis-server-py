@@ -84,3 +84,15 @@ class ExistsCommand(RedisCommand):
                 continue
             number += 1
         return number
+
+
+class DeleteCommand(RedisCommand):
+    def execute(self) -> str:
+        number = 0
+        for key in self._arguments:
+            if key not in redis_db:
+                continue
+            del redis_db[key]
+            number += 1
+        return number
+

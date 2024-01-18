@@ -1,4 +1,4 @@
-from commands.commands import PingCommand, EchoCommand, GetCommand, SetCommand, ClientCommand, CommandCommand, ExistsCommand
+from commands.commands import PingCommand, EchoCommand, GetCommand, SetCommand, ClientCommand, CommandCommand, ExistsCommand, DeleteCommand
 from base.exceptions import UnknownCommandException
 from commands.base import RedisCommand
     
@@ -12,6 +12,7 @@ def get_command_handler(command: str) -> RedisCommand:
         "CLIENT": ClientCommand,
         "COMMAND": CommandCommand,
         "EXISTS": ExistsCommand,
+        "DEL": DeleteCommand,
     }
     command_cls = command_map.get(command.upper())
     if not command_cls:
