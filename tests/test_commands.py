@@ -1,5 +1,6 @@
 import time
 import pytest
+from redis.exceptions import ResponseError
 
 value = "test_value"
 
@@ -77,3 +78,25 @@ def test_delete(redis_client):
     assert redis_client.delete("foo", "bar", "sadfsafdsa") == 2
     assert redis_client.delete("foo") == 0
 
+
+def test_increment(key, redis_client):
+    redis_client.set(key, 3)
+    assert redis_client.incr(key) == 4
+    assert redis_client.incr(key) == 5
+
+
+def test_increment_new_key(redis_client):
+    assert redis_client.incr("asdfasdf") == 1
+
+
+def test_increment_with_expire(key, redis_client):
+    redis_client.set(key, 3, px=500)
+    time.sleep(1)
+    assert redis_client.incr(key) == 1
+
+
+def test_increment_wrong_value_type(key, redis_client):
+    redis_client.set(key, "bar")
+    with pytest.raises(ResponseError) as exc:
+        redis_client.incr(key)
+    assert "ERR value is not an integer or out of range" in str(exc.value)

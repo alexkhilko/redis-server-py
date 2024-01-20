@@ -15,3 +15,7 @@ class RespProtocolError(RedisServerException):
 
 class RespParsingError(RedisServerException):
     pass
+
+
+class CommandProcessingException(RedisServerException):
+    pass
