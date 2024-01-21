@@ -150,16 +150,42 @@ class DecrByCommand(RedisCommand):
         return _increment(key, increment=-int(decrement))
 
 
+def _push(current_value: deque[str] | None, expires: int | None, values: list[str], is_left: bool) -> deque[str]:
+    if current_value is None or check_expires(expires):
+        return deque(values)
+    if not isinstance(current_value, deque):
+        raise CommandProcessingException("WRONGTYPE Operation against a key holding the wrong kind of value")
+    for val in values:
+        if is_left:
+            current_value.appendleft(val)
+        else:
+            current_value.append(val)
+    return current_value
+
+
 class LPushCommand(RedisCommand):
     def execute(self) -> str:
         key, *values = self._arguments
         value, expires = redis_db.get(key, [None, None])
-        if value is None or check_expires(expires):
-            value = deque(values)
-        else:
-            if not isinstance(value, deque):
-                raise CommandProcessingException("WRONGTYPE Operation against a key holding the wrong kind of value")
-            for val in values:
-                value.appendleft(val)
+        value = _push(
+            current_value=value,
+            expires=expires,
+            values=values,
+            is_left=True
+        )
+        redis_db[key] = (value, None)
+        return len(value)
+
+
+class RPushCommand(RedisCommand):
+    def execute(self) -> str:
+        key, *values = self._arguments
+        value, expires = redis_db.get(key, [None, None])
+        value = _push(
+            current_value=value,
+            expires=expires,
+            values=values,
+            is_left=False
+        )
         redis_db[key] = (value, None)
         return len(value)
