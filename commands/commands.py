@@ -99,11 +99,11 @@ class DeleteCommand(RedisCommand):
         return number
     
 
-def _increment(key: str, increment: int = 1) -> int:
+def _increment(key: str, increment: int) -> int:
     value, expires = redis_db.get(key, [None, None])
     if value is None or expires is not None and expires < _get_current_time_in_ms():
         redis_db[key] = (1, None)
-        return 1
+        return increment
     try:
         value = int(value)
     except ValueError as e:
@@ -129,3 +129,21 @@ class IncrByCommand(RedisCommand):
         key, increment = self.get("key"), self.get("increment")
         return _increment(key, increment=int(increment))
 
+
+class DecrCommand(RedisCommand):
+    REQUIRED_ATTRIBUTES = ["key"]
+
+    def execute(self) -> str:
+        self._parse_arguments()
+        key = self.get("key")
+        return _increment(key, increment=-1)
+
+
+class DecrByCommand(RedisCommand):
+    REQUIRED_ATTRIBUTES = ["key", "decrement"]
+
+    def execute(self) -> str:
+        self._parse_arguments()
+        key, decrement = self.get("key"), self.get("decrement")
+        print(decrement)
+        return _increment(key, increment=-int(decrement))
