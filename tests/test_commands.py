@@ -123,3 +123,15 @@ def test_decrement_wrong_value_type(key, redis_client):
     with pytest.raises(ResponseError) as exc:
         redis_client.decr(key)
     assert "ERR value is not an integer or out of range" in str(exc.value)
+
+
+def test_lpush(key, redis_client):
+    assert redis_client.lpush(key, 1) == 1
+    assert redis_client.lpush(key, 2, 3) == 3
+
+
+def test_lpush_wrong_value_type(key, redis_client):
+    redis_client.set(key, 1)
+    with pytest.raises(ResponseError) as exc:
+        redis_client.lpush(key, 1)
+    assert "WRONGTYPE Operation against a key holding the wrong kind of value" in str(exc.value)

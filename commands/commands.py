@@ -1,6 +1,7 @@
 import time
 from commands.base import RedisCommand
 from base.exceptions import CommandProcessingException
+from collections import deque
 
 
 class PingCommand(RedisCommand):
@@ -101,7 +102,7 @@ class DeleteCommand(RedisCommand):
 
 def _increment(key: str, increment: int) -> int:
     value, expires = redis_db.get(key, [None, None])
-    if value is None or expires is not None and expires < _get_current_time_in_ms():
+    if value is None or check_expires(expires):
         redis_db[key] = (1, None)
         return increment
     try:
@@ -147,3 +148,18 @@ class DecrByCommand(RedisCommand):
         key, decrement = self.get("key"), self.get("decrement")
         print(decrement)
         return _increment(key, increment=-int(decrement))
+
+
+class LPushCommand(RedisCommand):
+    def execute(self) -> str:
+        key, *values = self._arguments
+        value, expires = redis_db.get(key, [None, None])
+        if value is None or check_expires(expires):
+            value = deque(values)
+        else:
+            if not isinstance(value, deque):
+                raise CommandProcessingException("WRONGTYPE Operation against a key holding the wrong kind of value")
+            for val in values:
+                value.appendleft(val)
+        redis_db[key] = (value, None)
+        return len(value)
