@@ -187,3 +187,9 @@ class RPushCommand(RedisCommand):
         )
         REDIS_DB.set(key, (value, None))
         return len(value)
+
+
+class SaveCommand(RedisCommand):
+    def execute(self) -> str:
+        REDIS_DB.save_to_file()
+        return "OK"
