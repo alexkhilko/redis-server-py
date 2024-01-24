@@ -2,6 +2,7 @@ import time
 from commands.base import RedisCommand
 from base.exceptions import CommandProcessingException
 from collections import deque
+from db import REDIS_DB
 
 
 class PingCommand(RedisCommand):
@@ -24,9 +25,6 @@ class CommandCommand(RedisCommand):
         return ["OK"]
     
 
-redis_db = {}
-
-
 def _get_current_time_in_ms() -> int:
     return int(time.time()) * 1000
 
@@ -41,9 +39,9 @@ class GetCommand(RedisCommand):
     def execute(self) -> str:
         self._parse_arguments()
         key = self.get("key")
-        value, expires = redis_db.get(key, [None, None])
+        value, expires = REDIS_DB.get(key, [None, None])
         if expires is not None and expires < _get_current_time_in_ms():
-            del redis_db[key]
+            REDIS_DB.delete(key)
             return None
         return value
 
@@ -61,6 +59,7 @@ class SetCommand(RedisCommand):
             return int(exat) * 1000
         if pxat is not None:
             return int(pxat)
+        return None
 
     def execute(self) -> str:
         """SET key value [EX seconds] [PX milliseconds] [EXAT timestamp-seconds] [PXAT timestamp-ms] [NX|XX]"""
@@ -70,7 +69,7 @@ class SetCommand(RedisCommand):
         expire = None
         if any(expire_attrs.values()):
             expire = self._calculate_expire(**expire_attrs)
-        redis_db[key] = (str(value), expire)
+        REDIS_DB.set(key, (str(value), expire))
         print(f"setting {key} to {value} with expire {expire}")
         return "OK"
     
@@ -79,11 +78,11 @@ class ExistsCommand(RedisCommand):
     def execute(self):
         number = 0
         for key in self._arguments:
-            if key not in redis_db:
+            if key not in REDIS_DB:
                 continue
-            _, expires = redis_db[key]
+            _, expires = REDIS_DB[key]
             if check_expires(expires):
-                del redis_db[key]
+                REDIS_DB.delete(key)
                 continue
             number += 1
         return number
@@ -93,25 +92,24 @@ class DeleteCommand(RedisCommand):
     def execute(self) -> str:
         number = 0
         for key in self._arguments:
-            if key not in redis_db:
+            if key not in REDIS_DB:
                 continue
-            del redis_db[key]
+            REDIS_DB.delete(key)
             number += 1
         return number
     
 
 def _increment(key: str, increment: int) -> int:
-    value, expires = redis_db.get(key, [None, None])
+    value, expires = REDIS_DB.get(key, [None, None])
     if value is None or check_expires(expires):
-        redis_db[key] = (1, None)
+        REDIS_DB.set(key, (1, None))
         return increment
     try:
         value = int(value)
     except ValueError as e:
         raise CommandProcessingException("ERR value is not an integer or out of range") from e
-    redis_db[key] = value + increment, expires
+    REDIS_DB.set(key, (value + increment, expires))
     return value + increment
-
 
 class IncrCommand(RedisCommand):
     REQUIRED_ATTRIBUTES = ["key"]
@@ -166,26 +164,26 @@ def _push(current_value: deque[str] | None, expires: int | None, values: list[st
 class LPushCommand(RedisCommand):
     def execute(self) -> str:
         key, *values = self._arguments
-        value, expires = redis_db.get(key, [None, None])
+        value, expires = REDIS_DB.get(key, [None, None])
         value = _push(
             current_value=value,
             expires=expires,
             values=values,
             is_left=True
         )
-        redis_db[key] = (value, None)
+        REDIS_DB.set(key, (value, None))
         return len(value)
 
 
 class RPushCommand(RedisCommand):
     def execute(self) -> str:
         key, *values = self._arguments
-        value, expires = redis_db.get(key, [None, None])
+        value, expires = REDIS_DB.get(key, [None, None])
         value = _push(
             current_value=value,
             expires=expires,
             values=values,
             is_left=False
         )
-        redis_db[key] = (value, None)
+        REDIS_DB.set(key, (value, None))
         return len(value)
