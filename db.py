@@ -1,5 +1,6 @@
 import threading
 from typing import Any
+import pickle
 
 
 class RedisDB:
@@ -10,7 +11,7 @@ class RedisDB:
         with cls._instance_lock:
             if not cls._instance:
                 cls._instance = super().__new__(cls)
-                cls._instance._data = {}
+                cls._instance._restore_data()
             return cls._instance
         
     def __contains__(self, key) -> bool:
@@ -18,6 +19,17 @@ class RedisDB:
     
     def __getitem__(self, index):
         return self._data[index]
+
+    def save_to_file(self, filename='redis_snapshot.pkl'):
+        with open(filename, 'wb') as file:
+            pickle.dump(self._data, file)
+
+    def _restore_data(self, filename='redis_snapshot.pkl') -> None:
+        try:
+            with open(filename, 'rb') as file:
+                self._data = pickle.load(file)
+        except FileNotFoundError:
+            self._data = {}
     
     def set(self, key, value) -> None:
         self._data[key] = value
