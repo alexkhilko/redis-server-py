@@ -23,7 +23,7 @@ class ClientCommand(RedisCommand):
 class CommandCommand(RedisCommand):
     def execute(self) -> str:
         return ["OK"]
-    
+
 
 def _get_current_time_in_ms() -> int:
     return int(time.time()) * 1000
@@ -50,7 +50,13 @@ class SetCommand(RedisCommand):
     REQUIRED_ATTRIBUTES = ["key", "value"]
     POSSIBLE_OPTIONS = ["EX", "PX", "EXAT", "PXAT"]
 
-    def _calculate_expire(self, ex: int | None = None, px: int | None = None, exat: int | None = None, pxat: int | None = None) -> int:
+    def _calculate_expire(
+        self,
+        ex: int | None = None,
+        px: int | None = None,
+        exat: int | None = None,
+        pxat: int | None = None,
+    ) -> int:
         if ex is not None:
             return _get_current_time_in_ms() + int(ex) * 1000
         if px is not None:
@@ -72,8 +78,8 @@ class SetCommand(RedisCommand):
         REDIS_DB.set(key, (str(value), expire))
         print(f"setting {key} to {value} with expire {expire}")
         return "OK"
-    
-    
+
+
 class ExistsCommand(RedisCommand):
     def execute(self):
         number = 0
@@ -97,7 +103,7 @@ class DeleteCommand(RedisCommand):
             REDIS_DB.delete(key)
             number += 1
         return number
-    
+
 
 def _increment(key: str, increment: int) -> int:
     value, expires = REDIS_DB.get(key, [None, None])
@@ -107,9 +113,12 @@ def _increment(key: str, increment: int) -> int:
     try:
         value = int(value)
     except ValueError as e:
-        raise CommandProcessingException("ERR value is not an integer or out of range") from e
+        raise CommandProcessingException(
+            "ERR value is not an integer or out of range"
+        ) from e
     REDIS_DB.set(key, (value + increment, expires))
     return value + increment
+
 
 class IncrCommand(RedisCommand):
     REQUIRED_ATTRIBUTES = ["key"]
@@ -148,11 +157,18 @@ class DecrByCommand(RedisCommand):
         return _increment(key, increment=-int(decrement))
 
 
-def _push(current_value: deque[str] | None, expires: int | None, values: list[str], is_left: bool) -> deque[str]:
+def _push(
+    current_value: deque[str] | None,
+    expires: int | None,
+    values: list[str],
+    is_left: bool,
+) -> deque[str]:
     if current_value is None or check_expires(expires):
         return deque(values)
     if not isinstance(current_value, deque):
-        raise CommandProcessingException("WRONGTYPE Operation against a key holding the wrong kind of value")
+        raise CommandProcessingException(
+            "WRONGTYPE Operation against a key holding the wrong kind of value"
+        )
     for val in values:
         if is_left:
             current_value.appendleft(val)
@@ -165,12 +181,7 @@ class LPushCommand(RedisCommand):
     def execute(self) -> str:
         key, *values = self._arguments
         value, expires = REDIS_DB.get(key, [None, None])
-        value = _push(
-            current_value=value,
-            expires=expires,
-            values=values,
-            is_left=True
-        )
+        value = _push(current_value=value, expires=expires, values=values, is_left=True)
         REDIS_DB.set(key, (value, None))
         return len(value)
 
@@ -180,10 +191,7 @@ class RPushCommand(RedisCommand):
         key, *values = self._arguments
         value, expires = REDIS_DB.get(key, [None, None])
         value = _push(
-            current_value=value,
-            expires=expires,
-            values=values,
-            is_left=False
+            current_value=value, expires=expires, values=values, is_left=False
         )
         REDIS_DB.set(key, (value, None))
         return len(value)
@@ -191,5 +199,5 @@ class RPushCommand(RedisCommand):
 
 class SaveCommand(RedisCommand):
     def execute(self) -> str:
-        REDIS_DB.save_to_file()
+        REDIS_DB.dump_data()
         return "OK"
