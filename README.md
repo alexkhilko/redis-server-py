@@ -4,7 +4,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 This is a simple implementation of a Redis server written in Python.
-Inspired by John Cricket Coding Chanllenges https://codingchallenges.fyi/challenges/challenge-redis
+Inspired by John Crickett Coding Chanllenges https://codingchallenges.fyi/challenges/challenge-redis
 
 ## Features
 
@@ -89,4 +89,4 @@ pytest
 
 ## Acknowledgments
 The Redis project for inspiration.
-John Cricket's coding challenges for sparking the idea behind this project.
+John Crickett's coding challenges for sparking the idea behind this project.
