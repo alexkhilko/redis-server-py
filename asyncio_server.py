@@ -1,12 +1,15 @@
 import asyncio
-from request_handler import process_request
 import logging
+
+from arg_parser import parse_arguments
+from request_handler import process_request
 
 logger = logging.getLogger(__name__)
 
+args = parse_arguments()
 
-HOST = "127.0.0.1"
-PORT = 6379
+HOST = args.host
+PORT = args.port
 
 
 async def handle_client(reader, writer):

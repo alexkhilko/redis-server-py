@@ -1,15 +1,16 @@
-#!/usr/bin/env python3
-
-import socket
-from request_handler import process_request
 import logging
+import socket
 import threading
+
+from arg_parser import parse_arguments
+from request_handler import process_request
 
 logger = logging.getLogger(__name__)
 
+args = parse_arguments()
 
-HOST = "127.0.0.1"
-PORT = 6379
+HOST = args.host
+PORT = args.port
 
 
 def handle_client(connection):
