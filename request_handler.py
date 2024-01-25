@@ -1,8 +1,8 @@
-from base.exceptions import RedisServerException
 import logging
+
+from base.exceptions import RedisServerException
 from base.parsers import RespParser, RespSerializer
 from commands import get_command_handler
-
 
 logger = logging.getLogger(__name__)
 
@@ -20,4 +20,3 @@ def process_request(request: bytes) -> bytes:
         logger.exception("Redis exception - %s", exc)
         return RespSerializer().serialize([exc], is_error=True)
     return RespSerializer().serialize(response)
-

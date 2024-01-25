@@ -1,7 +1,8 @@
 import time
-from commands.base import RedisCommand
-from base.exceptions import CommandProcessingException
 from collections import deque
+
+from base.exceptions import CommandProcessingException
+from commands.base import RedisCommand
 from db import REDIS_DB
 
 
@@ -68,7 +69,6 @@ class SetCommand(RedisCommand):
         return None
 
     def execute(self) -> str:
-        """SET key value [EX seconds] [PX milliseconds] [EXAT timestamp-seconds] [PXAT timestamp-ms] [NX|XX]"""
         self._parse_arguments()
         expire_attrs = {key.lower(): self.get(key) for key in self.POSSIBLE_OPTIONS}
         key, value = self.get("key"), self.get("value")
@@ -76,7 +76,6 @@ class SetCommand(RedisCommand):
         if any(expire_attrs.values()):
             expire = self._calculate_expire(**expire_attrs)
         REDIS_DB.set(key, (str(value), expire))
-        print(f"setting {key} to {value} with expire {expire}")
         return "OK"
 
 
@@ -153,7 +152,6 @@ class DecrByCommand(RedisCommand):
     def execute(self) -> str:
         self._parse_arguments()
         key, decrement = self.get("key"), self.get("decrement")
-        print(decrement)
         return _increment(key, increment=-int(decrement))
 
 

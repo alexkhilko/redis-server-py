@@ -1,12 +1,13 @@
-from commands import RedisCommand
 import pytest
+
 from base.exceptions import InvalidCommandSyntaxError
+from commands import RedisCommand
 
 
 class TestRedisCommand(RedisCommand):
     REQUIRED_ATTRIBUTES = ("key", "value")
     POSSIBLE_OPTIONS = ("foo", "bar")
-    
+
     def execute(self) -> str:
         self._parse_arguments()
         return self._attributes
@@ -16,9 +17,15 @@ class TestRedisCommand(RedisCommand):
     "arguments, expected",
     [
         (["test_key", "test_value"], {"key": "test_key", "value": "test_value"}),
-        (["test_key", "test_value", "foo", 10], {"key": "test_key", "value": "test_value", "foo": 10}),
-        (["test_key", "test_value", "foo", 10, "bar", "20"], {"key": "test_key", "value": "test_value", "foo": 10, "bar": "20"}),
-    ]
+        (
+            ["test_key", "test_value", "foo", 10],
+            {"key": "test_key", "value": "test_value", "foo": 10},
+        ),
+        (
+            ["test_key", "test_value", "foo", 10, "bar", "20"],
+            {"key": "test_key", "value": "test_value", "foo": 10, "bar": "20"},
+        ),
+    ],
 )
 def test_parse_attributes(arguments, expected):
     command = TestRedisCommand(arguments)

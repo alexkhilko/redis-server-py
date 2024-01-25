@@ -9,6 +9,7 @@ class UnknownCommandException(RedisServerException):
 class InvalidCommandSyntaxError(RedisServerException):
     pass
 
+
 class RespProtocolError(RedisServerException):
     pass
 

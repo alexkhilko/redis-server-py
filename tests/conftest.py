@@ -1,8 +1,9 @@
-import pytest
+import pathlib
 import subprocess
 import time
+
+import pytest
 import redis
-import pathlib
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -15,7 +16,7 @@ def redis_server():
     redis_process.terminate()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def redis_client():
     # Connect to the Redis server
-    return redis.Redis(host='localhost', port=6379, db=0)
+    return redis.Redis(host="localhost", port=6379, db=0)

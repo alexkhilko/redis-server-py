@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from base.exceptions import InvalidCommandSyntaxError
 from typing import Any
+
+from base.exceptions import InvalidCommandSyntaxError
 
 
 class RedisCommand(ABC):
@@ -8,14 +9,15 @@ class RedisCommand(ABC):
     Base class for all Redis commands.
     It provides basic functionality for parsing arguments and options.
     """
-    #TODO: Add support for checking type of arguments
+
+    # TODO: Add support for checking type of arguments
     REQUIRED_ATTRIBUTES: tuple
     POSSIBLE_OPTIONS: tuple
 
     def __init__(self, arguments):
         self._arguments = arguments
         self._attributes: dict = {}
-    
+
     def _parse_arguments(self) -> None:
         arguments = self._arguments
         if len(arguments) < len(self.REQUIRED_ATTRIBUTES):
@@ -32,7 +34,7 @@ class RedisCommand(ABC):
             if arguments[i] not in self.POSSIBLE_OPTIONS:
                 raise InvalidCommandSyntaxError(f"ERR invalid option: {arguments[i]}")
             self._attributes[arguments[i]] = arguments[i + 1]
-        
+
     def get(self, key: str) -> Any:
         return self._attributes.get(key)
 

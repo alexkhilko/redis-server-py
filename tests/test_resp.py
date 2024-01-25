@@ -1,6 +1,7 @@
 import pytest
+
+from base.exceptions import RespParsingError, RespProtocolError
 from base.parsers import RespParser, RespSerializer
-from base.exceptions import RespProtocolError, RespParsingError
 
 
 @pytest.mark.parametrize(
@@ -30,7 +31,7 @@ def test_parse_error():
         parser = RespParser(data=b":foo\r\n")
         parser.parse()
 
-    
+
 def test_parse_protocol_error():
     with pytest.raises(RespProtocolError):
         parser = RespParser(data=b">foo")
@@ -47,7 +48,11 @@ def test_parse_protocol_error():
         (-1000, b":-1000\r\n", True),
         ("foobar", b"$6\r\nfoobar\r\n", True),
         ([], b"*0\r\n", True),
-        (["hello", None, "world"], b"*3\r\n$5\r\nhello\r\n$-1\r\n$5\r\nworld\r\n", True),
+        (
+            ["hello", None, "world"],
+            b"*3\r\n$5\r\nhello\r\n$-1\r\n$5\r\nworld\r\n",
+            True,
+        ),
         (["foo", "bar"], b"*2\r\n$3\r\nfoo\r\n$3\r\nbar\r\n", True),
         ([1, 2, 3], b"*3\r\n:1\r\n:2\r\n:3\r\n", True),
         (["echo", "hello world"], b"*2\r\n$4\r\necho\r\n$11\r\nhello world\r\n", True),
